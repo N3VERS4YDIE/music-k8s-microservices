@@ -12,7 +12,7 @@ import com.n3vers4ydie.getsong.dto.SongDTO;
 import com.n3vers4ydie.getsong.service.SongService;
 
 @RestController
-@RequestMapping("/api/songs")
+@RequestMapping("/api/songs/get")
 public class SongController {
     private final SongService songService;
 

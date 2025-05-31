@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.n3vers4ydie.deletesong.service.SongService;
 
 @RestController
-@RequestMapping("/api/songs")
+@RequestMapping("/api/songs/delete")
 public class SongController {
     private final SongService songService;
 

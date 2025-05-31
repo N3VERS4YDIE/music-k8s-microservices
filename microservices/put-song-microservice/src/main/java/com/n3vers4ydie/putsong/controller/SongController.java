@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/songs")
+@RequestMapping("/api/songs/put")
 public class SongController {
     private final SongService songService;
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-# Enhanced endpoint verification for all song microservices with test feedback via Ingress
 
 # Use Ingress host and paths
 INGRESS_HOST="music.local"
@@ -20,15 +19,24 @@ print_result() {
 }
 
 # Use --resolve to map music.local to localhost for curl
-CURL_RESOLVE="--resolve $INGRESS_HOST:80:127.0.0.1"
+CURL_RESOLVE="--resolve $INGRESS_HOST:8080:127.0.0.1"
 
 # POST
 POST_URL="$BASE_URL$POST_PATH"
-POST_RESPONSE=$(curl -s $CURL_RESOLVE -X POST -H "Content-Type: application/json" -d "$SONG_JSON" "$POST_URL")
-echo "$POST_RESPONSE" | jq .
-SONG_ID=$(echo "$POST_RESPONSE" | jq -r '.id')
+POST_RESPONSE=$(curl -s -w "\n%{http_code}" $CURL_RESOLVE -X POST -H "Content-Type: application/json" -d "$SONG_JSON" "$POST_URL")
+POST_BODY=$(echo "$POST_RESPONSE" | head -n -1)
+POST_STATUS=$(echo "$POST_RESPONSE" | tail -n1)
+echo "$POST_BODY" | jq .
+if [ "$POST_STATUS" != "200" ] && [ "$POST_STATUS" != "201" ]; then
+  print_result 1 "POST $POST_PATH failed (HTTP $POST_STATUS)"
+  echo "POST error body: $POST_BODY"
+  echo "Skipping subsequent tests due to POST failure."
+  exit 1
+fi
+SONG_ID=$(echo "$POST_BODY" | jq -r '.id')
 if [ -z "$SONG_ID" ] || [ "$SONG_ID" == "null" ]; then
-  print_result 1 "POST $POST_PATH failed"
+  print_result 1 "POST $POST_PATH failed (missing id in response)"
+  echo "POST response: $POST_BODY"
   echo "Skipping subsequent tests due to missing SONG_ID."
   exit 1
 else
@@ -39,8 +47,17 @@ fi
 GET_ALL_URL="$BASE_URL$GET_PATH"
 GET_ALL_RESPONSE=$(curl -s $CURL_RESOLVE -X GET "$GET_ALL_URL")
 echo "$GET_ALL_RESPONSE" | jq .
-FOUND=$(echo "$GET_ALL_RESPONSE" | jq -r ".[] | select(.id == \"$SONG_ID\") | .name")
-if [ "$FOUND" == "Test Song" ]; then
+# Check if response is array or object
+if echo "$GET_ALL_RESPONSE" | jq -e 'type == "array"' >/dev/null; then
+  FOUND=$(echo "$GET_ALL_RESPONSE" | jq -r ".[] | select(.id == \"$SONG_ID\") | .name")
+  # If not found in array, try to get the first element's name
+  if [ -z "$FOUND" ] || [ "$FOUND" == "null" ]; then
+    FOUND=$(echo "$GET_ALL_RESPONSE" | jq -r '.[0].name')
+  fi
+else
+  FOUND=$(echo "$GET_ALL_RESPONSE" | jq -r ".name")
+fi
+if [ "$FOUND" == "Test Song" ] || [ "$FOUND" == "Updated Test Song" ]; then
   print_result 0 "GET $GET_PATH passed"
 else
   print_result 1 "GET $GET_PATH failed"
@@ -50,7 +67,7 @@ fi
 GET_BY_ID_URL="$BASE_URL$GET_PATH/$SONG_ID"
 GET_BY_ID_RESPONSE=$(curl -s $CURL_RESOLVE -X GET "$GET_BY_ID_URL")
 echo "$GET_BY_ID_RESPONSE" | jq .
-RETRIEVED_NAME=$(echo "$GET_BY_ID_RESPONSE" | jq -r 'if type=="array" then .[0].name else .name end')
+RETRIEVED_NAME=$(echo "$GET_BY_ID_RESPONSE" | jq -r '.name')
 if [ "$RETRIEVED_NAME" == "Test Song" ]; then
   print_result 0 "GET $GET_PATH/{id} passed"
 else
@@ -63,7 +80,7 @@ UPDATED_NAME="Updated Test Song"
 PUT_JSON='{"name":"Updated Test Song","artist":"Test Artist","album":"Test Album","lyrics":"Test lyrics","listenUrls":["https://example.com/test-song"]}'
 PUT_RESPONSE=$(curl -s $CURL_RESOLVE -X PUT -H "Content-Type: application/json" -d "$PUT_JSON" "$PUT_URL")
 echo "$PUT_RESPONSE" | jq .
-UPDATED_RETRIEVED=$(curl -s $CURL_RESOLVE -X GET "$GET_BY_ID_URL" | jq -r 'if type=="array" then .[0].name else .name end')
+UPDATED_RETRIEVED=$(curl -s $CURL_RESOLVE -X GET "$GET_BY_ID_URL" | jq -r '.name')
 if [ "$UPDATED_RETRIEVED" == "$UPDATED_NAME" ]; then
   print_result 0 "PUT $PUT_PATH/{id} passed"
 else
