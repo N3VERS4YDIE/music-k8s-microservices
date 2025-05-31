@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mariadb-backup
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mariadb-backup
+            image: mariadb:11.3
+            env:
+            - name: MYSQL_PWD
+              value: musicpass
+            command:
+            - /bin/sh
+            - -c
+            - "mysqldump -hmariadb -umusicuser musicdb > /backup/musicdb-$(date +%F).sql"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-storage
+            hostPath:
+              path: /home/n3vers4ydie/music-microservices/db/backup

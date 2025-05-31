@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: get-song-microservice
+spec:
+  selector:
+    app: get-song-microservice
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+  type: ClusterIP

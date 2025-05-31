@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+spec:
+  selector:
+    matchLabels:
+      app: mariadb
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        - name: MYSQL_DATABASE
+          value: musicdb
+        - name: MYSQL_USER
+          value: music
+        - name: MYSQL_PASSWORD
+          value: music
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mariadb-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mariadb-storage
+        persistentVolumeClaim:
+          claimName: mariadb-pvc

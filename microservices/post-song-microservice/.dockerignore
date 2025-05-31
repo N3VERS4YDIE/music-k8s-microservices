@@ -1,0 +1,14 @@
+.gradle
+build
+bin
+*.log
+*.swp
+.DS_Store
+.git
+.gitignore
+.idea
+*.iml
+out
+*.jar
+*.war
+*.ear

@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: music-microservices-ingress
+spec:
+  rules:
+    - host: music.local
+      http:
+        paths:
+          - path: /api/songs/post
+            pathType: Prefix
+            backend:
+              service:
+                name: post-song-microservice
+                port:
+                  number: 8081
+          - path: /api/songs/get
+            pathType: Prefix
+            backend:
+              service:
+                name: get-song-microservice
+                port:
+                  number: 8082
+          - path: /api/songs/put
+            pathType: Prefix
+            backend:
+              service:
+                name: put-song-microservice
+                port:
+                  number: 8083
+          - path: /api/songs/delete
+            pathType: Prefix
+            backend:
+              service:
+                name: delete-song-microservice
+                port:
+                  number: 8084

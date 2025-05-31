@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: get-song-microservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: get-song-microservice
+  template:
+    metadata:
+      labels:
+        app: get-song-microservice
+    spec:
+      containers:
+      - name: get-song-microservice
+        image: n3vers4ydie/get-song-microservice:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod

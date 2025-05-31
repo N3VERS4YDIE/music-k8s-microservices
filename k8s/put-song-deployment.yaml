@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: put-song-microservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: put-song-microservice
+  template:
+    metadata:
+      labels:
+        app: put-song-microservice
+    spec:
+      containers:
+      - name: put-song-microservice
+        image: n3vers4ydie/put-song-microservice:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
